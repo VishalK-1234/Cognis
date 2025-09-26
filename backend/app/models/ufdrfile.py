@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy import Column, String, DateTime, ForeignKey, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime
-from app.db.base import Base
+from app.db.base_class import Base
 
 class UFDRFile(Base):
     __tablename__ = "ufdr_files"

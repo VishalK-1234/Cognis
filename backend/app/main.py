@@ -1,29 +1,34 @@
+# app/main.py
+import app.db.base # noqa: F401
+
 from fastapi import FastAPI
-from app.core.config import settings
-from app.api.routes import auth, users, cases, ufdr, health
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.middleware.audit import AuditMiddleware
+# Now import routers (they can safely import models directly)
+from app.api.routes import auth, users, cases, ufdr, health, artifacts, conversation, dashboard, audit
 
-def create_app() -> FastAPI:
-    app = FastAPI(
-        title="Cognis",
-        description="AI-based UFDR Analysis Tool",
-        version="1.0.0",
-    )
+app = FastAPI(title="Cognis Backend")
 
-    # Routers
-    app.include_router(auth.router)
-    app.include_router(users.router)
-    app.include_router(cases.router)
-    app.include_router(ufdr.router)
-    app.include_router(health.router)
+# Add audit middleware
+app.add_middleware(AuditMiddleware)
 
-    # Middleware
-    app.add_middleware(AuditMiddleware)
+# CORS — loosened for development; change later
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    # 👉 Add this to print all registered routes
-    for route in app.routes:
-        print(f"{route.methods} -> {route.path}")
-
-    return app
-
-app = create_app()
+# Register routers
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(cases.router)
+app.include_router(ufdr.router)
+app.include_router(artifacts.router)
+app.include_router(conversation.router)
+app.include_router(dashboard.router)
+app.include_router(audit.router)
+app.include_router(health.router)
