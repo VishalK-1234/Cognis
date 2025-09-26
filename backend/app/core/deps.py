@@ -6,6 +6,16 @@ from jose import jwt, JWTError
 from app.core.config import settings
 from pydantic import BaseModel
 
+# backend/app/core/deps.py
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import SessionLocal  # adjust import if database.py is elsewhere
+
+async def get_db() -> AsyncSession:
+    async with SessionLocal() as session:
+        yield session
+
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 class TokenData(BaseModel):

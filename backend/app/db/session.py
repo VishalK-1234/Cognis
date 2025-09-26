@@ -1,6 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from contextlib import asynccontextmanager
 from app.core.config import settings
 
 # Create engine
@@ -19,13 +18,7 @@ SessionLocal = sessionmaker(
     expire_on_commit=False,
 )
 
-# Dependency (for routes)
+# Dependency (for routes & security)
 async def get_db():
-    async with SessionLocal() as session:
-        yield session
-
-# Context manager (for middleware or background tasks)
-@asynccontextmanager
-async def get_db_session():
     async with SessionLocal() as session:
         yield session

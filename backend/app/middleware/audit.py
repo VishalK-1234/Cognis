@@ -1,7 +1,7 @@
 #backend/app/middleware/audit.py
 
 from starlette.middleware.base import BaseHTTPMiddleware
-from app.db.session import get_db_session
+from app.db.session import get_db
 from app.models.auditlog import AuditLog
 import uuid
 from datetime import datetime
@@ -10,7 +10,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         response = await call_next(request)
 
-        async with get_db_session() as db:  # ✅ works now
+        async for db in get_db():   
             log = AuditLog(
                 id=uuid.uuid4(),
                 method=request.method,

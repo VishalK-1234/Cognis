@@ -2,8 +2,8 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
-    REDIS_URL: str
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost/cognis"
+    REDIS_URL: str | None = None
     LOCAL_STORAGE_PATH: str = "./data/uploads"
 
     JWT_SECRET: str

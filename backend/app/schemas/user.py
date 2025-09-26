@@ -1,23 +1,40 @@
-from pydantic import BaseModel, EmailStr, constr
-import uuid
+from uuid import UUID
+from pydantic import BaseModel, EmailStr
 from enum import Enum
 
-class UserBase(BaseModel):
-    username: str
-    email: EmailStr
-
-class UserRead(UserBase):
-    id: uuid.UUID
-
-    class Config:
-        orm_mode = True
-
+# Reuse the same roles you used in models
 class UserRole(str, Enum):
     investigator = "investigator"
     admin = "admin"
 
-class UserCreate(BaseModel):
+
+# ---------- Base ----------
+class UserBase(BaseModel):
     username: str
     email: EmailStr
+
+
+# ---------- Create ----------
+class UserCreate(UserBase):
     password: str
-    role: UserRole = UserRole.investigator  
+    role: UserRole
+
+
+# ---------- Read/Output ----------
+class UserRead(UserBase):
+    id: UUID
+    role: UserRole
+
+    class Config:
+        orm_mode = True
+
+
+# ---------- Response for APIs ----------
+class UserOut(BaseModel):
+    id: UUID
+    username: str
+    email: EmailStr
+    role: UserRole
+
+    class Config:
+        orm_mode = True

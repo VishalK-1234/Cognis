@@ -11,14 +11,18 @@ def create_app() -> FastAPI:
     )
 
     # Routers
-    app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-    app.include_router(users.router, prefix="/users", tags=["Users"])
-    app.include_router(cases.router)   # prefix is inside file
-    app.include_router(ufdr.router)    # prefix is inside file
-    app.include_router(health.router)  # prefix is inside file
+    app.include_router(auth.router)
+    app.include_router(users.router)
+    app.include_router(cases.router)
+    app.include_router(ufdr.router)
+    app.include_router(health.router)
 
     # Middleware
     app.add_middleware(AuditMiddleware)
+
+    # 👉 Add this to print all registered routes
+    for route in app.routes:
+        print(f"{route.methods} -> {route.path}")
 
     return app
 

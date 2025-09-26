@@ -1,30 +1,28 @@
 # app/core/security.py
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Callable, List
-
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
 from app.core.config import settings
-from app.db.session import get_db_session
+from app.db.session import get_db
+from app.models.user import User
 
 # ---- Password hashing ----
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
-    """
-    Hash a plaintext password.
-    """
+    # bcrypt only supports 72 bytes max
+    if len(password.encode("utf-8")) > 72:
+        password = password[:72]
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verify a plaintext password against a hashed password.
-    """
+    if len(plain_password.encode("utf-8")) > 72:
+        plain_password = plain_password[:72]
     return pwd_context.verify(plain_password, hashed_password)
 
 
@@ -64,23 +62,25 @@ def decode_access_token(token: str) -> Dict[str, Any]:
 # ---- Current user dependency ----
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db)   # ✅ use the one from session.py
 ):
-    """
-    Resolve the current user from the token 'sub' claim.
-    NOTE: User model is imported locally here to avoid circular imports at module import time.
-    """
-    payload = decode_access_token(token)
-    user_id = payload.get("sub")
-    if not user_id:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET,                 # ✅ FIXED
+            algorithms=[settings.JWT_ALGORITHM]  # ✅ FIXED
+        )
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+            )
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token missing user id (sub)",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Invalid authentication credentials",
         )
-
-    # Local import to avoid circular import problems
-    from app.models.user import User  # imported here on purpose
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalars().first()
@@ -88,7 +88,6 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
         )
     return user
 
