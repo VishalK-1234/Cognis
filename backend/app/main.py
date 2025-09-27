@@ -6,8 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.middleware.audit import AuditMiddleware
 # Now import routers (they can safely import models directly)
-from app.api.routes import auth, users, cases, ufdr, health, artifacts, conversation, dashboard, audit
-
+from app.api.routes import auth, users, ufdr, health, artifacts, conversation, dashboard, audit
+from app.api.routes import cases as cases_router
 app = FastAPI(title="Cognis Backend")
 
 # Add audit middleware
@@ -25,7 +25,7 @@ app.add_middleware(
 # Register routers
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(cases.router)
+app.include_router(cases_router.router)
 app.include_router(ufdr.router)
 app.include_router(artifacts.router)
 app.include_router(conversation.router)
